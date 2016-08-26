@@ -28,7 +28,7 @@ var framesPerSecond = 30;
 // Scores
 var player1Score = 0;
 var player2Score = 0;
-const VICTORY = 1;
+const VICTORY = 5;
 var isGameOver = false;
 
 window.onload = function() {
@@ -36,25 +36,37 @@ window.onload = function() {
     canvas = document.getElementById('gameCanvas');
     canvasContext = canvas.getContext('2d');
     setInterval(gameControl,1000/framesPerSecond);
-    canvas.addEventListener('keydown',movePaddle, false);
+    canvas.addEventListener('mousemove', function(e) {
+                                    var mousePos = mousePosition(e);
+                                    paddle1Y = mousePos.y - (paddleHeight / 2);
+                                    });
+    canvas.addEventListener('click',restartClick, false);
 
 }
 
-// Handle moving the paddle with the key press
-function movePaddle(e) {
-    console.log(e.keyCode);
-    
-    if(e.keyCode == '87' && paddle1Y > 0) {
-        paddle1Y -= 15;
-        console.log('test');
-    } 
-    
-    if(e.keyCode == '83' && paddle1Y < canvas.height - paddleHeight) {
-        paddle1Y += 15;
+// Handle restarting the game
+function restartClick(e) {
+    if(isGameOver) {
+        player1Score = 0;
+        player2Score = 0;
+        isGameOver = false;
+        gameControl();
+        
     }
-    
-    
 }
+
+// Handle moving the paddle with the mouse
+function mousePosition(e) {
+    var rectangle = canvas.getBoundingClientRect();
+    var mainPage = document.documentElement;
+    var mouseX = e.clientX - rectangle.left - mainPage.scrollLeft;
+    var mouseY = e.clientY - rectangle.top - mainPage.scrollTop;
+    return {
+        x:mouseX,
+        y:mouseY
+    };    
+}
+
 // Update the moving pieces and redraw the background 
 function gameControl() {
   draw();
@@ -115,20 +127,20 @@ function update() {
     //console.log(player1Score);
 }
 
+// function to draw the net
+function drawNet() {
+    for(var i = 0; i < canvas.height; i+=40) {
+        drawRectangle(canvas.width / 2 - 1, i , 2, 20, 'white');
+    }
+}
+
 // Drawing the canvas to the screen
 function draw() {
     // The canvas 
     drawRectangle(0,0,canvas.width,canvas.height,canvasColor);
     // If a player has won show the win screen
     if(isGameOver) {
-        if(player1Score > player2Score) {
-            canvasContext.fillStyle = 'red';
-            canvasContext.font = "30px Arial";
-            canvasContext.fillText("Player 1 WINS! " + player1Score + " - " + player2Score, 250, canvas.height / 2);
-            canvasContext.font="italic small-caps bold 12px arial";
-            canvasContext.fillStyle = 'white';
-            canvasContext.fillText("Click to continue", 340, canvas.height / 2 + 40);
-        }
+            displayWinner(player1Score,player2Score);
         return;
     }
     
@@ -143,6 +155,33 @@ function draw() {
     canvasContext.fillText(player1Score, 95, 60);
     canvasContext.fillText("Player 2 ", 680 , 40);
     canvasContext.fillText(player2Score, 695, 60);
+    
+    // Draw the net
+    drawNet();
+}
+
+// Function for displaying the winner to the screen
+function displayWinner(score1,score2) {
+    var winner;
+    var score;
+    var winningScore = score1;
+    var losingScore = score2;
+    // Storing the winner in a variable
+    if(score1 > score2) {
+        winner = 'player 1';
+    } else {
+        winner = 'player 2';
+        winningScore = score2;
+        losingScore = score1;
+    }
+    
+    // Displaying the info to the screen
+    canvasContext.fillStyle = 'red';
+    canvasContext.font = "30px Arial";
+    canvasContext.fillText(winner + " WINS! " + winningScore + " - " + losingScore, 250, canvas.height / 2);
+    canvasContext.font="italic small-caps bold 12px arial";
+    canvasContext.fillStyle = 'white';
+    canvasContext.fillText("Click to continue", 340, canvas.height / 2 + 40);
 }
 
 // Universal function for drawing a rectangle to be used for the paddles and the canvas
@@ -161,9 +200,9 @@ function drawCircle(x,y,radius,color) {
 
 // The computer AI
 function computerAI() {
-    var computerSpeed = 6;
+    var computerSpeed = 8;
     // The number of pixels off center that the paddle will wait before moving
-    // Steadies the battle a bit
+    // Steadies the paddle a bit
     var steadyPixels = 25;
     var paddle2Center = paddle2Y + (paddleHeight / 2);
     
